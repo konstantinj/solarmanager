@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: solarmanager
+      MYSQL_DATABASE: solardb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: solarmanager
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+
+  solarmanager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://*:5000
+
+  apache:
+    image: httpd:latest
+    ports:
+      - "90:90"
+    volumes:
+      - ./apache/solarmanager.conf:/usr/local/apache2/conf/solarmanager.conf
+      - ./apache/custom-httpd.conf:/usr/local/apache2/conf/custom-httpd.conf
+    depends_on:
+      - solarmanager
+
+volumes:
+  mariadb_data:
